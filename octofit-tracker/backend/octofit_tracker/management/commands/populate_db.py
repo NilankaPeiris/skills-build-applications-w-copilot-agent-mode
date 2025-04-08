@@ -1,8 +1,9 @@
-from pymongo import MongoClient
+from django.core.management.base import BaseCommand
+from octofit_tracker.models import User, Team, Activity, Leaderboard, Workout
 from datetime import timedelta
 from bson import ObjectId
+from pymongo import MongoClient
 from django.conf import settings
-from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     help = 'Populate the database with test data for users, teams, activity, leaderboard, and workouts'
@@ -15,48 +16,50 @@ class Command(BaseCommand):
         # Drop existing collections
         db.users.drop()
         db.teams.drop()
-        db.activities.drop()
+        db.activity.drop()
         db.leaderboard.drop()
         db.workouts.drop()
 
-        # Insert test data
+        # Create users
         users = [
-            {"_id": ObjectId(), "username": "thundergod", "email": "thundergod@mhigh.edu", "password": "thundergodpassword"},
-            {"_id": ObjectId(), "username": "metalgeek", "email": "metalgeek@mhigh.edu", "password": "metalgeekpassword"},
-            {"_id": ObjectId(), "username": "zerocool", "email": "zerocool@mhigh.edu", "password": "zerocoolpassword"},
-            {"_id": ObjectId(), "username": "crashoverride", "email": "crashoverride@hmhigh.edu", "password": "crashoverridepassword"},
-            {"_id": ObjectId(), "username": "sleeptoken", "email": "sleeptoken@mhigh.edu", "password": "sleeptokenpassword"},
+            User.objects.create(_id=ObjectId(), username='thundergod', email='thundergod@mhigh.edu', password='thundergodpassword'),
+            User.objects.create(_id=ObjectId(), username='metalgeek', email='metalgeek@mhigh.edu', password='metalgeekpassword'),
+            User.objects.create(_id=ObjectId(), username='zerocool', email='zerocool@mhigh.edu', password='zerocoolpassword'),
+            User.objects.create(_id=ObjectId(), username='crashoverride', email='crashoverride@hmhigh.edu', password='crashoverridepassword'),
+            User.objects.create(_id=ObjectId(), username='sleeptoken', email='sleeptoken@mhigh.edu', password='sleeptokenpassword'),
         ]
-        db.users.insert_many(users)
 
-        team = {"_id": ObjectId(), "name": "Blue Team", "members": [user["_id"] for user in users]}
-        db.teams.insert_one(team)
+        # Create teams
+        blue_team = Team.objects.create(_id=ObjectId(), name='Blue Team')
+        gold_team = Team.objects.create(_id=ObjectId(), name='Gold Team')
+        blue_team.members.add(users[0], users[1], users[2])
+        gold_team.members.add(users[3], users[4])
 
+        # Create activities
         activities = [
-            {"_id": ObjectId(), "user_id": users[0]["_id"], "activity_type": "Cycling", "duration": 60},
-            {"_id": ObjectId(), "user_id": users[1]["_id"], "activity_type": "Crossfit", "duration": 120},
-            {"_id": ObjectId(), "user_id": users[2]["_id"], "activity_type": "Running", "duration": 90},
-            {"_id": ObjectId(), "user_id": users[3]["_id"], "activity_type": "Strength", "duration": 30},
-            {"_id": ObjectId(), "user_id": users[4]["_id"], "activity_type": "Swimming", "duration": 75},
+            Activity.objects.create(_id=ObjectId(), user=users[0], activity_type='Cycling', duration=timedelta(hours=1)),
+            Activity.objects.create(_id=ObjectId(), user=users[1], activity_type='Crossfit', duration=timedelta(hours=2)),
+            Activity.objects.create(_id=ObjectId(), user=users[2], activity_type='Running', duration=timedelta(hours=1, minutes=30)),
+            Activity.objects.create(_id=ObjectId(), user=users[3], activity_type='Strength', duration=timedelta(minutes=30)),
+            Activity.objects.create(_id=ObjectId(), user=users[4], activity_type='Swimming', duration=timedelta(hours=1, minutes=15)),
         ]
-        db.activities.insert_many(activities)
 
-        leaderboard = [
-            {"_id": ObjectId(), "user_id": users[0]["_id"], "score": 100},
-            {"_id": ObjectId(), "user_id": users[1]["_id"], "score": 90},
-            {"_id": ObjectId(), "user_id": users[2]["_id"], "score": 95},
-            {"_id": ObjectId(), "user_id": users[3]["_id"], "score": 85},
-            {"_id": ObjectId(), "user_id": users[4]["_id"], "score": 80},
+        # Create leaderboard entries
+        leaderboard_entries = [
+            Leaderboard.objects.create(_id=ObjectId(), user=users[0], score=100),
+            Leaderboard.objects.create(_id=ObjectId(), user=users[1], score=90),
+            Leaderboard.objects.create(_id=ObjectId(), user=users[2], score=95),
+            Leaderboard.objects.create(_id=ObjectId(), user=users[3], score=85),
+            Leaderboard.objects.create(_id=ObjectId(), user=users[4], score=80),
         ]
-        db.leaderboard.insert_many(leaderboard)
 
+        # Create workouts
         workouts = [
-            {"_id": ObjectId(), "name": "Cycling Training", "description": "Training for a road cycling event"},
-            {"_id": ObjectId(), "name": "Crossfit", "description": "Training for a crossfit competition"},
-            {"_id": ObjectId(), "name": "Running Training", "description": "Training for a marathon"},
-            {"_id": ObjectId(), "name": "Strength Training", "description": "Training for strength"},
-            {"_id": ObjectId(), "name": "Swimming Training", "description": "Training for a swimming competition"},
+            Workout.objects.create(_id=ObjectId(), name='Cycling Training', description='Training for a road cycling event'),
+            Workout.objects.create(_id=ObjectId(), name='Crossfit', description='Training for a crossfit competition'),
+            Workout.objects.create(_id=ObjectId(), name='Running Training', description='Training for a marathon'),
+            Workout.objects.create(_id=ObjectId(), name='Strength Training', description='Training for strength'),
+            Workout.objects.create(_id=ObjectId(), name='Swimming Training', description='Training for a swimming competition'),
         ]
-        db.workouts.insert_many(workouts)
 
         self.stdout.write(self.style.SUCCESS('Successfully populated the database with test data.'))
