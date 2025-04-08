@@ -35,4 +35,4 @@ test_workouts = [
     {"name": "Running Training", "description": "Training for a marathon"},
     {"name": "Strength Training", "description": "Training for strength"},
     {"name": "Swimming Training", "description": "Training for a swimming competition"},
-]
+] 
